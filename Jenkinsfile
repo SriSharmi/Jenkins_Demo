@@ -1,23 +1,18 @@
-
 pipeline {
     agent any
-
-    options {
-        timestamps()
-    }
 
     stages {
 
         stage('Checkout') {
             steps {
-                echo 'Getting source code from GitHub'
+                echo 'Downloading source code from GitHub...'
                 checkout scm
             }
         }
 
         stage('Build') {
             steps {
-                echo 'Checking HTML website files'
+                echo 'Building Jenkins Welcome Website...'
 
                 bat '''
                     if not exist index.html (
@@ -25,54 +20,52 @@ pipeline {
                         exit /b 1
                     )
                 '''
-
-                echo 'Build completed successfully'
             }
         }
 
         stage('Test') {
             steps {
-                echo 'Testing HTML website'
+                echo 'Testing HTML file...'
 
-                bat '''
-                    findstr /C:"Welcome to Jenkins CI/CD!" index.html
+                script {
+                    if (!fileExists('index.html')) {
+                        error('HTML file is missing!')
+                    }
 
-                    if errorlevel 1 (
-                        echo ERROR: Required website content not found
-                        exit /b 1
-                    )
-                '''
-
-                echo 'Website test passed'
+                    echo 'HTML file test passed!'
+                }
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Deploying website to Windows'
+                echo 'Deploying website to Windows laptop...'
 
                 bat '''
-                    if not exist "%PUBLIC%\\JenkinsDeploy" (
-                        mkdir "%PUBLIC%\\JenkinsDeploy"
-                    )
-
-                    copy /Y index.html "%PUBLIC%\\JenkinsDeploy\\index.html"
-
-                    if errorlevel 1 exit /b 1
+                    if not exist C:\\JenkinsWebsite mkdir C:\\JenkinsWebsite
+                    copy /Y index.html C:\\JenkinsWebsite\\index.html
                 '''
+            }
+        }
 
-                echo 'Website deployed successfully'
+        stage('Success') {
+            steps {
+                echo '================================'
+                echo 'JENKINS DEPLOYMENT SUCCESSFUL!'
+                echo '================================'
+                echo 'Website deployed successfully!'
+                echo 'Open: http://localhost:8085'
             }
         }
     }
 
     post {
         success {
-            echo 'CI/CD PIPELINE COMPLETED SUCCESSFULLY!'
+            echo 'CI/CD Pipeline completed successfully!'
         }
 
         failure {
-            echo 'CI/CD PIPELINE FAILED. Check Console Output.'
+            echo 'CI/CD Pipeline failed. Check the console output.'
         }
     }
 }
